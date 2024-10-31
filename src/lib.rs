@@ -1,6 +1,8 @@
 #![doc = include_str!("../docs/en/src/README.md")]
 #![no_std]
 #![feature(asm_goto)]
+#![feature(raw_ref_op)]
+#![feature(asm_const)]
 #![allow(clippy::needless_doctest_main)]
 
 mod arch;
@@ -192,8 +194,8 @@ impl<M: CodeManipulator, const S: bool> GenericStaticKey<M, S> {
 /// Count of jump entries in __static_keys section. Note that
 /// there will be several dummy jump entries inside this section.
 pub fn jump_entries_count() -> usize {
-    let jump_entry_start_addr = &raw mut os::JUMP_ENTRY_START;
-    let jump_entry_stop_addr = &raw mut os::JUMP_ENTRY_STOP;
+    let jump_entry_start_addr = unsafe { &raw mut os::JUMP_ENTRY_START };
+    let jump_entry_stop_addr = unsafe { &raw mut os::JUMP_ENTRY_STOP };
     unsafe { jump_entry_stop_addr.offset_from(jump_entry_start_addr) as usize }
 }
 
@@ -242,8 +244,8 @@ pub fn global_init() {
 
 /// Inner function to [`global_init`]
 fn global_init_inner() {
-    let jump_entry_start_addr = &raw mut os::JUMP_ENTRY_START;
-    let jump_entry_stop_addr = &raw mut os::JUMP_ENTRY_STOP;
+    let jump_entry_start_addr = unsafe { &raw mut os::JUMP_ENTRY_START };
+    let jump_entry_stop_addr = unsafe { &raw mut os::JUMP_ENTRY_STOP };
     let jump_entry_len =
         unsafe { jump_entry_stop_addr.offset_from(jump_entry_start_addr) as usize };
     let jump_entries =
