@@ -19,6 +19,11 @@ pub use windows::*;
 
 #[cfg(target_os = "none")]
 mod none;
-
 #[cfg(target_os = "none")]
 pub use none::*;
+
+
+#[cfg(target_os = "hermit")]
+mod hermit;
+#[cfg(target_os = "hermit")]
+pub use hermit::*;
