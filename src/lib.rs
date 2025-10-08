@@ -130,6 +130,10 @@ pub type StaticKey<const S: bool> = GenericStaticKey<crate::os::ArchCodeManipula
 pub type StaticTrueKey = StaticKey<true>;
 /// A [`StaticKey`] with initial status `false`.
 pub type StaticFalseKey = StaticKey<false>;
+/// A [`GenericStaticKey`] with initial status `true`.
+pub type RawStaticTrueKey<M> = GenericStaticKey<M, true>;
+/// A [`GenericStaticKey`] with initial status `false`.
+pub type RawStaticFalseKey<M> = GenericStaticKey<M, false>;
 
 // Insert a dummy static key here, and use this at global_init function. This is
 // to avoid linker failure when there is no jump entries, and thus the __static_keys
@@ -300,6 +304,26 @@ pub const fn new_static_true_key() -> StaticTrueKey {
     StaticTrueKey::new(true)
 }
 
+/// Create a new static key generic over code manipulator with `false` as initial value.
+///
+/// This method should be called to initialize a static mut static key. It is UB to use this method
+/// to create a static key on stack or heap, and use this static key to control branches.
+///
+/// Use [`define_static_key_false_generic`] for short.
+pub const fn new_static_false_key_generic<M: CodeManipulator>() -> RawStaticFalseKey<M> {
+    RawStaticFalseKey::<M>::new(false)
+}
+
+/// Create a new static key generic over code manipulator with `true` as initial value.
+///
+/// This method should be called to initialize a static mut static key. It is UB to use this method
+/// to create a static key on stack or heap, and use this static key to control branches.
+///
+/// Use [`define_static_key_true_generic`] for short.
+pub const fn new_static_true_key_generic<M: CodeManipulator>() -> RawStaticTrueKey<M> {
+    RawStaticTrueKey::<M>::new(true)
+}
+
 /// Define a static key with `false` as initial value.
 ///
 /// This macro will define a static mut variable without documentations and visibility modifiers.
@@ -337,6 +361,44 @@ macro_rules! define_static_key_true {
     ($key: ident) => {
         #[used]
         static $key: $crate::StaticTrueKey = $crate::new_static_true_key();
+    };
+}
+
+/// Define a static key generic over code manipulator with `false` as initial value.
+///
+/// This macro will define a static mut variable without documentations and visibility modifiers.
+/// Use [`new_static_false_key_generic`] for customization.
+/// # Usage
+/// ```rust ignore
+/// use static_keys::{define_static_key_false_generic};
+/// define_static_key_false_generic!(MY_FALSE_STATIC_KEY, DummyCodeManipulator);
+/// ```
+#[macro_export]
+macro_rules! define_static_key_false_generic {
+    ($key: ident, $manipulator: ty) => {
+        #[used]
+        static $key: $crate::RawStaticFalseKey<$manipulator> =
+            $crate::new_static_false_key_generic::<$manipulator>();
+    };
+}
+
+/// Define a static key generic over code manipulator with `true` as initial value.
+///
+/// This macro will define a static mut variable without documentations and visibility modifiers.
+/// Use [`new_static_true_key_generic`] for customization.
+///
+/// # Usage
+/// ```rust ignore
+/// use static_keys::{define_static_key_true_generic};
+///
+/// define_static_key_true_generic!(MY_TRUE_STATIC_KEY, DummyCodeManipulator);
+/// ```
+#[macro_export]
+macro_rules! define_static_key_true_generic {
+    ($key: ident, $manipulator: ty) => {
+        #[used]
+        static $key: $crate::RawStaticTrueKey<$manipulator> =
+            $crate::new_static_true_key_generic::<$manipulator>();
     };
 }
 
